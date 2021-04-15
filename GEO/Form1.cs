@@ -18,6 +18,7 @@ namespace GEO
         {
             InitializeComponent();
             chart.MouseWheel += chart_MouseWheel;
+            panelTest.Visible = false;
         }
 
         private void startButton_Click(object sender, EventArgs e)
@@ -26,7 +27,7 @@ namespace GEO
             double b = Convert.ToDouble(bBox.Text);
             double d = Convert.ToDouble(dBox.Text);
             double tau = Convert.ToDouble(tauBox.Text);
-            double T = Convert.ToDouble(Tbox.Text);
+            int T = Convert.ToInt32(Tbox.Text);
             Random generator = new Random();
             int round = 0;
             int l = (int)Math.Ceiling(Math.Log(((b - a) * (1 / d)) + 1, 2));
@@ -39,12 +40,12 @@ namespace GEO
             }
 
             List<Individual> individuals = null;
-            List<double> ListVb = new List<double>();
+            List<Individual> ListVb = new List<Individual>();
             Individual Vbest;
 
             Individual individual = Geo.MakeFirstInd(a, b, d, l, generator);
             Vbest = individual.Clone();
-            ListVb.Add(individual.Fx);
+            ListVb.Add(individual.Clone());
 
             for (int i = 0; i < T; i++)
             {
@@ -54,12 +55,12 @@ namespace GEO
 
                 Geo.MutateInd(individual, individuals, a, b, l, round, generator);
 
-                if(Vbest.Fx < individual.Fx)
+                if (Vbest.Fx < individual.Fx)
                 {
                     Vbest = individual.Clone();
                 }
 
-                ListVb.Add(individual.Fx);
+                ListVb.Add(individual.Clone());
                 individuals.Clear();
             }
 
@@ -68,15 +69,14 @@ namespace GEO
             var source = new BindingSource(bindingList, null);
             table.DataSource = source;
 
+            ToTxt.WriteToFile(ListVb, T, tau, d);
             MakeChart(ListVb, Vbest);
         }
 
-        private void MakeChart(List<double> genList, Individual Vbest)
+        private void MakeChart(List<Individual> genList, Individual Vbest)
         {
             var chartMaker = chart.ChartAreas[0];
             ChartArea CA = chart.ChartAreas[0];
-
-
             CA.AxisX.ScaleView.Zoomable = true;
             chartMaker.AxisX.LabelStyle.Format = "";
             chartMaker.AxisY.LabelStyle.Format = "";
@@ -133,8 +133,8 @@ namespace GEO
 
             for (int i = 0; i < genList.Count; i++)
             {
-                chart.Series["Vb"].Points.AddXY(i, genList[i]);
-                if(genList[i] == Vbest.Fx)
+                chart.Series["Vb"].Points.AddXY(i, genList[i].Fx);
+                if (genList[i].Fx == Vbest.Fx)
                 {
                     chart.Series["Best"].Points.AddXY(i, Vbest.Fx);
                 }
@@ -147,7 +147,6 @@ namespace GEO
         {
             var chart = (Chart)sender;
             var xAxis = chart.ChartAreas[0].AxisX;
-            var yAxis = chart.ChartAreas[0].AxisY;
 
             try
             {
@@ -161,15 +160,122 @@ namespace GEO
                     var xMin = xAxis.ScaleView.ViewMinimum;
                     var xMax = xAxis.ScaleView.ViewMaximum;
 
-
                     var posXStart = xAxis.PixelPositionToValue(e.Location.X) - (xMax - xMin) / 4;
                     var posXFinish = xAxis.PixelPositionToValue(e.Location.X) + (xMax - xMin) / 4;
-
 
                     xAxis.ScaleView.Zoom(posXStart, posXFinish);
                 }
             }
             catch { }
+        }
+
+        private void startTestB_Click(object sender, EventArgs e)
+        {
+            double a = Convert.ToDouble(aBox.Text);
+            double b = Convert.ToDouble(bBox.Text);
+            double d = Convert.ToDouble(dBox.Text);
+            
+            Random generator = new Random();
+            int round = 0;
+            int l = (int)Math.Ceiling(Math.Log(((b - a) * (1 / d)) + 1, 2));
+
+
+            List<Individual> VbestList = new List<Individual>();
+            List<Generation> genList = new List<Generation>();
+
+            double pom = d;
+            while (pom < 1)
+            {
+                round++;
+                pom *= 10;
+            }
+            double T = 2000;
+            double tau = 0.5;
+            for (int p = 1; p < 50; p++)
+            {
+                T += 100;
+                tau = 0.5;
+                for (int k = 1; k < 30; k++)
+
+                {
+                    tau += 0.1;
+                    tau = Math.Round(tau,2);
+                    for (int j = 0; j < 1; j++)
+                    {
+                        
+                        List<Individual> individuals = null;
+                        List<Individual> ListVb = new List<Individual>();
+                        Individual Vbest;
+
+                        Individual individual = Geo.MakeFirstInd(a, b, d, l, generator);
+                        Vbest = individual.Clone();
+                        ListVb.Add(individual.Clone());
+
+                        for (int i = 0; i < T; i++)
+                        {
+                            individuals = Geo.MakePopulation(individual, a, b, l, round);
+
+                            Geo.CountProbability(individuals, tau);
+
+                            Geo.MutateInd(individual, individuals, a, b, l, round, generator);
+
+                            if (Vbest.Fx < individual.Fx)
+                            {
+                                Vbest = individual.Clone();
+                            }
+
+                            ListVb.Add(individual.Clone());
+                            individuals.Clear();
+                        }
+
+                        VbestList.Add(Vbest);
+                    }
+
+                    Generation gen = new Generation
+                    {
+                        T = T,
+                        Tau = tau,
+                        Fx = VbestList.Average(ind => ind.Fx)
+                    };
+                    genList.Add(gen);
+                }
+            }
+
+            genList.Sort(delegate (Generation x, Generation y)
+            {
+                return y.Fx.CompareTo(x.Fx);
+            });
+            var bindingList = new BindingList<Generation>(genList);
+            var source = new BindingSource(bindingList, null);
+            testTable.DataSource = source;
+        }
+
+        private void zad1Button_Click(object sender, EventArgs e)
+        {
+            panelTest.Visible = false;
+            testB.Visible = true;
+        }
+
+        private void testB_Click(object sender, EventArgs e)
+        {
+            panelTest.Visible = true;
+            testB.Visible = false;
+        }
+
+        private void dBox_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar) && (e.KeyChar != ','))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void tauBox_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar) && (e.KeyChar != ','))
+            {
+                e.Handled = true;
+            }
         }
     }
 }
