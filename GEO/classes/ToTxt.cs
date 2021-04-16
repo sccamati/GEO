@@ -17,7 +17,7 @@ namespace GEO.classes
             {
                 file.WriteLine("Pokolenie " + i + "\n");
                 file.WriteLine("lp | VbReal | VbBin | f(VbReal)");
-                file.WriteLine($"{i+1} | {genList[i].Xreal} | {genList[i].Xbit} | {genList[i].Fx}");
+                file.WriteLine($"{i} | {genList[i].Xreal} | {genList[i].Xbit} | {genList[i].Fx}");
                 file.WriteLine("\n");
             }
             file.Close();

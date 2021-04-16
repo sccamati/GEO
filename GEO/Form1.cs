@@ -18,6 +18,7 @@ namespace GEO
         {
             InitializeComponent();
             chart.MouseWheel += chart_MouseWheel;
+            testChart.MouseWheel += chart_MouseWheel;
             panelTest.Visible = false;
         }
 
@@ -47,7 +48,7 @@ namespace GEO
             Vbest = individual.Clone();
             ListVb.Add(individual.Clone());
 
-            for (int i = 0; i < T; i++)
+            for (int i = 1; i < T; i++)
             {
                 individuals = Geo.MakePopulation(individual, a, b, l, round);
 
@@ -174,7 +175,8 @@ namespace GEO
             double a = Convert.ToDouble(aBox.Text);
             double b = Convert.ToDouble(bBox.Text);
             double d = Convert.ToDouble(dBox.Text);
-            
+            double T = Convert.ToDouble(testTBox.Text);
+
             Random generator = new Random();
             int round = 0;
             int l = (int)Math.Ceiling(Math.Log(((b - a) * (1 / d)) + 1, 2));
@@ -182,63 +184,57 @@ namespace GEO
 
             List<Individual> VbestList = new List<Individual>();
             List<Generation> genList = new List<Generation>();
-
+            List<Individual> individuals = null;
+            Individual Vbest;
             double pom = d;
+
             while (pom < 1)
             {
                 round++;
                 pom *= 10;
             }
-            double T = 2000;
-            double tau = 0.5;
-            for (int p = 1; p < 50; p++)
+
+            double tau = 0;
+
+            for (int k = 0; k < 50; k++)
             {
-                T += 100;
-                tau = 0.5;
-                for (int k = 1; k < 30; k++)
+                tau += 0.1;
+                tau = Math.Round(tau, 2);
 
+                for (int j = 0; j < 100; j++)
                 {
-                    tau += 0.1;
-                    tau = Math.Round(tau,2);
-                    for (int j = 0; j < 1; j++)
+
+                    Individual individual = Geo.MakeFirstInd(a, b, d, l, generator);
+                    Vbest = individual.Clone();
+
+                    for (int i = 0; i < T; i++)
                     {
-                        
-                        List<Individual> individuals = null;
-                        List<Individual> ListVb = new List<Individual>();
-                        Individual Vbest;
+                        individuals = Geo.MakePopulation(individual, a, b, l, round);
 
-                        Individual individual = Geo.MakeFirstInd(a, b, d, l, generator);
-                        Vbest = individual.Clone();
-                        ListVb.Add(individual.Clone());
+                        Geo.CountProbability(individuals, tau);
 
-                        for (int i = 0; i < T; i++)
+                        Geo.MutateInd(individual, individuals, a, b, l, round, generator);
+
+                        if (Vbest.Fx < individual.Fx)
                         {
-                            individuals = Geo.MakePopulation(individual, a, b, l, round);
-
-                            Geo.CountProbability(individuals, tau);
-
-                            Geo.MutateInd(individual, individuals, a, b, l, round, generator);
-
-                            if (Vbest.Fx < individual.Fx)
-                            {
-                                Vbest = individual.Clone();
-                            }
-
-                            ListVb.Add(individual.Clone());
-                            individuals.Clear();
+                            Vbest = individual.Clone();
                         }
 
-                        VbestList.Add(Vbest);
+                        individuals.Clear();
                     }
 
-                    Generation gen = new Generation
-                    {
-                        T = T,
-                        Tau = tau,
-                        Fx = VbestList.Average(ind => ind.Fx)
-                    };
-                    genList.Add(gen);
+                    VbestList.Add(Vbest.Clone());
                 }
+
+                Generation gen = new Generation
+                {
+                    T = T,
+                    Tau = tau,
+                    Fx = VbestList.Average(ind => ind.Fx)
+                };
+
+                genList.Add(gen);
+                VbestList.Clear();
             }
 
             genList.Sort(delegate (Generation x, Generation y)
@@ -277,5 +273,166 @@ namespace GEO
                 e.Handled = true;
             }
         }
+
+        private void testTB_Click(object sender, EventArgs e)
+        {
+            double a = Convert.ToDouble(aBox.Text);
+            double b = Convert.ToDouble(bBox.Text);
+            double d = Convert.ToDouble(dBox.Text);
+            double tau = Convert.ToDouble(testTauBox.Text);
+            Random generator = new Random();
+            int round = 0;
+            int l = (int)Math.Ceiling(Math.Log(((b - a) * (1 / d)) + 1, 2));
+
+
+            List<Individual> VbestList = new List<Individual>();
+            List<Generation> genList = new List<Generation>();
+            List<Individual> individuals = null;
+            Individual Vbest;
+            double pom = d;
+
+            while (pom < 1)
+            {
+                round++;
+                pom *= 10;
+            }
+
+            int T = 5100;
+
+            for (int k = 0; k < 50; k++)
+            {
+                T -= 100;
+
+                for (int j = 0; j < 100; j++)
+                {
+
+                    Individual individual = Geo.MakeFirstInd(a, b, d, l, generator);
+                    Vbest = individual.Clone();
+
+                    for (int i = 0; i < T; i++)
+                    {
+                        individuals = Geo.MakePopulation(individual, a, b, l, round);
+
+                        Geo.CountProbability(individuals, tau);
+
+                        Geo.MutateInd(individual, individuals, a, b, l, round, generator);
+
+                        if (Vbest.Fx < individual.Fx)
+                        {
+                            Vbest = individual.Clone();
+                        }
+
+                        individuals.Clear();
+                    }
+
+                    VbestList.Add(Vbest.Clone());
+                }
+
+                Generation gen = new Generation
+                {
+                    T = T,
+                    Tau = tau,
+                    Fx = VbestList.Average(ind => ind.Fx)
+                };
+
+                genList.Add(gen);
+                VbestList.Clear();
+            }
+
+            genList.Sort(delegate (Generation x, Generation y)
+            {
+                return y.Fx.CompareTo(x.Fx);
+            });
+            var bindingList = new BindingList<Generation>(genList);
+            var source = new BindingSource(bindingList, null);
+            testTable.DataSource = source;
+        }
+
+        private void testStabilityButton_Click(object sender, EventArgs e)
+        {
+            double a = Convert.ToDouble(aBox.Text);
+            double b = Convert.ToDouble(bBox.Text);
+            double d = Convert.ToDouble(dBox.Text);
+            double T = Convert.ToDouble(testTBox.Text);
+            double tau = Convert.ToDouble(testTauBox.Text);
+            Random generator = new Random();
+            int round = 0;
+            int l = (int)Math.Ceiling(Math.Log(((b - a) * (1 / d)) + 1, 2));
+
+
+            List<Individual> VbestList = new List<Individual>();
+            List<Generation> genList = new List<Generation>();
+            List<Individual> individuals = null;
+            Individual Vbest;
+            double pom = d;
+
+            while (pom < 1)
+            {
+                round++;
+                pom *= 10;
+            }
+
+            for (int j = 0; j < 100; j++)
+            {
+
+                Individual individual = Geo.MakeFirstInd(a, b, d, l, generator);
+                Vbest = individual.Clone();
+
+                for (int i = 0; i < T; i++)
+                {
+                    individuals = Geo.MakePopulation(individual, a, b, l, round);
+
+                    Geo.CountProbability(individuals, tau);
+
+                    Geo.MutateInd(individual, individuals, a, b, l, round, generator);
+
+                    if (Vbest.Fx < individual.Fx)
+                    {
+                        Vbest = individual.Clone();
+                    }
+
+                    individuals.Clear();
+                }
+
+                VbestList.Add(Vbest.Clone());
+            }
+
+
+            var chartMaker = testChart.ChartAreas[0];
+            ChartArea CA = testChart.ChartAreas[0];
+            CA.AxisX.ScaleView.Zoomable = true;
+            chartMaker.AxisX.LabelStyle.Format = "";
+            chartMaker.AxisY.LabelStyle.Format = "";
+            chartMaker.AxisX.LabelStyle.IsEndLabelVisible = true;
+            chartMaker.AxisY.Minimum = 1.5;
+            chartMaker.AxisX.Minimum = 0;
+            chartMaker.AxisX.Maximum = VbestList.Count;
+            chartMaker.AxisY.Interval = 0.1;
+            chartMaker.AxisX.Interval = 2;
+
+            testChart.Series[0].IsVisibleInLegend = false;
+
+            if (testChart.Series.Count == 1)
+            {
+                testChart.Series.Add("Vb");
+            }
+            else
+            {
+                testChart.Series["Vb"].Points.Clear();
+            }
+
+            testChart.Series["Vb"].ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
+            testChart.Series["Vb"].Color = Color.Green;
+            testChart.Series["Vb"].BorderWidth = 1;
+
+            for (int i = 0; i < VbestList.Count; i++)
+            {
+                testChart.Series["Vb"].Points.AddXY(i, VbestList[i].Fx);
+            }
+
+
+        }
+
     }
 }
+
