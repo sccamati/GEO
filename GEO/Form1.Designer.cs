@@ -111,7 +111,7 @@ namespace GEO
             this.tauBox.Name = "tauBox";
             this.tauBox.Size = new System.Drawing.Size(100, 20);
             this.tauBox.TabIndex = 3;
-            this.tauBox.Text = "0,7";
+            this.tauBox.Text = "2,2";
             this.tauBox.KeyPress += new System.Windows.Forms.KeyPressEventHandler(this.tauBox_KeyPress);
             // 
             // Tbox
@@ -120,7 +120,7 @@ namespace GEO
             this.Tbox.Name = "Tbox";
             this.Tbox.Size = new System.Drawing.Size(100, 20);
             this.Tbox.TabIndex = 4;
-            this.Tbox.Text = "3900";
+            this.Tbox.Text = "3800";
             // 
             // startButton
             // 

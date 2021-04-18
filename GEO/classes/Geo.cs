@@ -69,7 +69,7 @@ namespace GEO
                 newXbit[i] = newXbit[i].Equals('0') ? '1' : '0';
                 Individual newInd = new Individual
                 {
-                    Id = i + 1,
+                    Id = i,
                     Xbit = newXbit.ToString()
                 };
 
@@ -90,9 +90,9 @@ namespace GEO
 
         public static void CountProbability(List<Individual> individuals, double tau)
         {
-            for (int i = 0; i < individuals.Count; i++)
+            for (int i = 1; i <= individuals.Count; i++)
             {
-                individuals[i].P = 1 / Math.Pow(i, tau);
+                individuals[i-1].P = 1 / Math.Pow(i, tau);
             }
         }
 
@@ -105,7 +105,7 @@ namespace GEO
                 R = generator.NextDouble();
                 if (R <= individuals[i].P)
                 {
-                    Xbit[i] = Xbit[i].Equals('0') ? '1' : '0';
+                    Xbit[individuals[i].Id] = Xbit[individuals[i].Id].Equals('0') ? '1' : '0';
                 }
             }
             individual.Xbit = Xbit.ToString();
