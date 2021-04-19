@@ -42,12 +42,13 @@ namespace GEO
 
             List<Individual> individuals = null;
             List<Individual> ListVb = new List<Individual>();
+            List<Individual> ListVbest = new List<Individual>();
             Individual Vbest;
 
             Individual individual = Geo.MakeFirstInd(a, b, d, l, generator);
             Vbest = individual.Clone();
             ListVb.Add(individual.Clone());
-
+            ListVbest.Add(Vbest.Clone());
             for (int i = 1; i < T; i++)
             {
                 individuals = Geo.MakePopulation(individual, a, b, l, round);
@@ -61,6 +62,7 @@ namespace GEO
                     Vbest = individual.Clone();
                 }
 
+                ListVbest.Add(Vbest.Clone());
                 ListVb.Add(individual.Clone());
                 individuals.Clear();
             }
@@ -71,10 +73,10 @@ namespace GEO
             table.DataSource = source;
 
             ToTxt.WriteToFile(ListVb, T, tau, d);
-            MakeChart(ListVb, Vbest);
+            MakeChart(ListVb, ListVbest);
         }
 
-        private void MakeChart(List<Individual> genList, Individual Vbest)
+        private void MakeChart(List<Individual> genList, List<Individual> Vbest)
         {
             var chartMaker = chart.ChartAreas[0];
             ChartArea CA = chart.ChartAreas[0];
@@ -128,17 +130,14 @@ namespace GEO
             chart.Series["Vb"].Color = Color.Green;
             chart.Series["Vb"].BorderWidth = 1;
 
-            chart.Series["Best"].ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Point;
+            chart.Series["Best"].ChartType = System.Windows.Forms.DataVisualization.Charting.SeriesChartType.Line;
             chart.Series["Best"].Color = Color.Red;
-            chart.Series["Best"].BorderWidth = 3;
+            chart.Series["Best"].BorderWidth = 2;
 
             for (int i = 0; i < genList.Count; i++)
             {
                 chart.Series["Vb"].Points.AddXY(i, genList[i].Fx);
-                if (genList[i].Fx == Vbest.Fx)
-                {
-                    chart.Series["Best"].Points.AddXY(i, Vbest.Fx);
-                }
+                chart.Series["Best"].Points.AddXY(i, Vbest[i].Fx);
             }
 
 
